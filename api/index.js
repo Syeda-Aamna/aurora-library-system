@@ -7,10 +7,13 @@ import authRouter, { requireAdmin } from './auth.js';
 import publicRouter from './public.js';
 import { Book, Member, Loan, LibrarySetting } from './models.js';
 import { sampleBooks, sampleMembers } from '../shared/demo-data.js';
+import { demoAdminRouter, demoPublicRouter } from './demo-store.js';
+import { isPreviewDemoMode } from './runtime.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+const demoMode = isPreviewDemoMode();
 
 // Vercel routes /api/* to this one function; restore the requested Express path.
 app.use((req, _res, next) => {
@@ -80,10 +83,16 @@ const database = async (_req, _res, next) => {
   try { await connectDatabase(); next(); } catch (error) { next(error); }
 };
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'aurora-library-api' }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'aurora-library-api', demoMode }));
 app.use('/api/auth', authRouter);
-app.use('/api/public', database, publicRouter);
-app.use('/api', requireAdmin, database, router);
+if (demoMode) {
+  app.use('/api/public', demoPublicRouter);
+  app.use('/api', requireAdmin, demoAdminRouter);
+} else {
+  app.use('/api/public', database, publicRouter);
+  app.use('/api', requireAdmin, database, router);
+}
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API endpoint not found.' }));
 app.use((error, _req, res, _next) => {
   const status = error.status || (error.name === 'ValidationError' || error.name === 'CastError' ? 400 : error.code === 11000 ? 409 : 500);
   const message = error.code === 11000 ? 'That ISBN or email address is already in use.' : status === 500 ? 'The server could not complete that request.' : error.message;

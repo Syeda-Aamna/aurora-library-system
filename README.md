@@ -13,15 +13,19 @@ npm run dev
 
 Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:3001`. Keep `.env` private and never commit it. Use a fresh 32+ character `SESSION_SECRET` and a strong administrator password.
 
+To try the complete fictional librarian demo without MongoDB, run `DEMO_MODE=true SESSION_SECRET="$(openssl rand -hex 32)" npm run dev` with no `MONGODB_URI`. This is a non-production preview mode; the UI marks it clearly and its changes live only in the current API process. For an HTTPS-hosted preview that proxies this local server, also set `PUBLIC_HTTPS_PREVIEW=true` so the administrator session cookie uses `Secure; SameSite=None`. The production service never allows demo login.
+
+The visual identity and logo use the user's original [Aurora Store site](https://my-project-evrj.vercel.app/) as a read-only reference; no changes are made to that original website or project.
+
 ## Sample library data
 
 On the first API request, the app seeds a **fictional demo library** only if the MongoDB database has no books, members, or loans. It creates six clearly marked imaginary titles, three test-only members, one active sample loan and one returned sample loan so the catalog, dashboard, inventory counts and circulation screens have example activity. Sample emails use the reserved `.test` domain. The seed is recorded once; deleting the samples later will not make them reappear. To disable first-run seeding, set `SEED_DEMO_DATA=false` before the first API request.
 
-If the public reader page is opened without `MONGODB_URI`, it displays those same six fictional books from a **local, read-only preview fallback** so titles, invented authors, categories, years and availability are visible before database setup. This browser preview is clearly labeled and does not persist edits; real CRUD and circulation remain backed by MongoDB and require administrator sign-in.
+For a **fully interactive local preview**, set `DEMO_MODE=true` with no `MONGODB_URI` and run outside production. The API then uses the same REST paths for in-memory fictional books, members and loans, and the staff sign-in screen offers **Enter librarian demo**. Add/edit/delete, issue/return, stock counts, validation, search and dashboard summaries all work; changes last for the lifetime of that preview process and reset when it restarts. Demo access is disabled automatically in production and whenever MongoDB is configured. If demo mode is off and MongoDB is absent, the public reader page still shows a clearly labeled read-only fallback; administrator writes require the database.
 
 ## API
 
-- Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/logout`, `GET /api/public/books`
+- Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/admin/demo-login` (interactive non-production demo only), `POST /api/auth/logout`, `GET /api/public/books`
 - Administrator session required: `GET /api/dashboard`; `GET|POST /api/books`, `PATCH|DELETE /api/books/:id`; `GET|POST /api/members`, `PATCH|DELETE /api/members/:id`; `GET|POST /api/loans`, `PATCH /api/loans/:id/return`
 
 Admin sessions are signed, HTTP-only cookies with a 12-hour lifetime. Login credentials and the signing secret are runtime environment variables. The public book endpoint returns only catalog fields, never member contact details or private circulation records.

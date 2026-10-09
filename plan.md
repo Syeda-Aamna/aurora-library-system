@@ -1,35 +1,38 @@
-# Aurora Library — Implementation Plan
+# Aurora Store Library Desk — Implementation Plan
 
 ## Scope and architecture
-A standalone MERN library-management application in a new private repository and separate Vercel project. The existing Aurora landing page, its repository, and its Vercel deployment are explicitly out of scope and will remain unchanged. The React/Vite client communicates with an Express REST API; Mongoose persists books, members, and circulation records in MongoDB. The app expects `MONGODB_URI` as a deployment secret and never embeds database credentials in client code.
+A public, separate MERN library-management application linked to the user's new repository and (once access is available) its own Vercel project. The original Aurora Store website, repository, branding asset source and deployment are read-only references; they must not be changed. React/Vite uses the Express REST API. Production and any configured database use Mongoose/MongoDB for persistent books, members and circulation records. An explicitly opt-in, non-production `DEMO_MODE` with no `MONGODB_URI` uses a process-local fictional store behind the same REST routes so visitors can test librarian workflows without touching real data. Demo changes are ephemeral and labeled; the in-memory path is never used in production.
 
 ## Project structure
-- `src/`: React UI, page-state, components and API client.
-- `api/`: Express app, Mongoose models, API routes, validation and domain rules; Vercel serverless entry point.
-- `server-local.js`: local Express listener for development.
-- `public/`: browser icon and static assets.
-- Root config: Vite, Vercel rewrites, npm scripts, environment sample, README.
+- `src/`: role selection, public catalog, protected librarian UI, forms, state and API client.
+- `api/`: Express app, Mongoose models/routes/auth and isolated demo-only route store; Vercel function entry point.
+- `shared/demo-data.js`: common fictional catalog/member examples used by the reader fallback and MongoDB empty-database seeding.
+- `server-local.js`: local Express listener for development/demo mode.
+- `public/`: the user's Aurora Store logo and static web assets.
+- Root config: Vite, Vercel rewrites, npm scripts, environment example, README and route manifest.
 
 ## Product behavior
-- Books: create, view, edit, delete, search/filter, and track total/available quantity.
-- Members: create, view, edit, delete, search and filter.
-- Circulation: issue an available copy to an existing member; mark active loans returned; persist issue/return history and update inventory atomically with rollback-safe document writes.
-- Dashboard: totals for book records, members, active issues, returned loans, and available copies, plus recent circulation.
-- API validates required values, email/ISBN uniqueness, positive quantities and publication year; active circulation prevents deleting referenced books or members.
+- Books: create, view, edit, delete, search/filter; display title, author, category, ISBN, total/available quantities and publication year.
+- Members: create, view, edit, delete and search; store name, email, phone, address and membership date.
+- Circulation: issue an available copy to a member, mark active loans returned, maintain history, and update stock in the same operations; refuse invalid or duplicate operations.
+- Dashboard: totals for titles, members, active/returned loans and available copies, plus recent circulation and low-stock insight.
+- Public reader catalog: sanitized catalog fields only. It can show clearly labeled fictional preview books with invented authors and correct years if the API database is not configured.
+- Librarian access: signed HTTP-only session; demo login exists only in non-production memory mode. Production requires private credentials and `SESSION_SECRET`.
+- Sample data: seed fictional books/members/loans only on a genuinely empty MongoDB database, once; do not seed over a populated library.
 
 ## Design
-- **Design movement:** Literary editorial, with restrained archival-library cues.
-- **Core principles:** calm hierarchy; high information clarity; warm, tactile accents; actions close to the records they affect.
-- **Color philosophy:** deep ink and warm paper evoke a reading room; antique brass highlights selection and primary actions; muted sage/red communicate status without overpowering data.
-- **Layout paradigm:** fixed slim navigation rail, flexible content canvas, dashboard KPI strip and dense but breathable record tables.
-- **Signature elements:** small chapter/folio numerals; gold hairline dividers; rounded status seals.
-- **Interaction philosophy:** low-friction create/edit dialogs; confirm destructive actions; clear empty/loading/error states; persistent feedback.
-- **Animation:** short opacity/translate transitions for dialogs and page changes; subtle hover states; honor reduced-motion preferences.
-- **Typography:** DM Sans for functional UI; Playfair Display for brand and page headings; tabular numerals for metrics.
-- **Brand essence:** a composed digital circulation desk for librarians, blending an inviting literary identity with efficient daily operations. Personality: scholarly, warm, dependable.
-- **Brand voice:** concise and helpful, never decorative at the expense of clarity. Example: “A good day to turn a new page.” “One copy is ready to lend.”
-- **Wordmark/logo:** custom typographic Aurora Library lockup with a folio/stack glyph.
-- **Signature brand color:** aged brass `#c99a45`.
+- **Design movement:** Aurora Store's cinematic, literary editorial style, adapted from its dark branded landing page.
+- **Core principles:** identifiable original brand; compact vertical rhythm; legible inventory information; interactions that clearly distinguish demo from persistent data.
+- **Color philosophy:** espresso-black and charcoal create the existing reading-room mood; antique gold focuses key actions; warm ivory text preserves contrast and readability.
+- **Layout paradigm:** compact logo-led front door; public book catalogue as a shelf grid; librarian desk with slim side rail, concise KPI strip and operational tables.
+- **Signature elements:** exact circular feather/book Aurora Store emblem; warm gold chapter numerals and fine lines; book-cover tiles and sample-data seals.
+- **Interaction philosophy:** direct create/edit/issue dialogs with validation, confirmation on removal, immediate inventory updates, visible demo-only label and actionable errors.
+- **Animation:** restrained short transitions for hover and dialogs; no ornamental movement in data tables; honor reduced-motion preferences.
+- **Typography:** DM Sans for UI/data, Playfair Display for literary headings; readable 13–16 px body/data text and high-contrast title hierarchy.
+- **Brand essence:** a welcoming, dependable digital desk for the Aurora reading community. Personality: literary, warm, precise.
+- **Brand voice:** concise and inviting. Examples: “Find a story worth keeping.” “Every page opens a door.”
+- **Wordmark/logo:** reuse the exact supplied Aurora Store circular gold emblem from the user's read-only reference at https://my-project-evrj.vercel.app/; do not modify the original site.
+- **Signature brand color:** antique Aurora gold `#d4a23e` against espresso-black `#090705`.
 
 ## Deployment constraints
-Vercel serves the built React app and Express API functions. `MONGODB_URI` is supplied privately at runtime through Vercel environment configuration; a production instance cannot persist records until a reachable MongoDB deployment URI is configured. The repository and Vercel project are new, distinct resources.
+Vercel should serve the React app and Express API in a new project. The permanent app needs private `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` server environment variables. A public repository must never contain these secrets. If Vercel project-creation access is unavailable, keep the original deployment untouched and request the required sign-in/permission; do not claim permanent deployment. Rotate the previously disclosed database credential before production.

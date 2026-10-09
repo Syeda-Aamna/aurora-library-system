@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { isPreviewDemoMode } from './runtime.js';
 
 const router = Router();
 const cookieName = 'aurora_admin_session';
@@ -24,8 +25,9 @@ function validSession(token) {
     return data.email && data.expires > Date.now() ? data : null;
   } catch { return null; }
 }
-function cookieOptions() {
-  return { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: sessionLifetime };
+function cookieOptions(req) {
+  const localHttp = ['localhost', '127.0.0.1', '::1'].includes(req.hostname) && process.env.PUBLIC_HTTPS_PREVIEW !== 'true';
+  return { httpOnly: true, secure: !localHttp, sameSite: localHttp ? 'lax' : 'none', path: '/', maxAge: sessionLifetime };
 }
 function readCookie(req) {
   const entry = (req.headers.cookie || '').split(';').map((part) => part.trim()).find((part) => part.startsWith(`${cookieName}=`));
@@ -58,12 +60,21 @@ router.post('/admin/login', (req, res) => {
   if (sessionSecret().length < 32 || !expectedEmail || !expectedPassword) return res.status(503).json({ error: 'Administrator sign-in is not configured yet.' });
   if (!equalSecret(email, expectedEmail) || !equalSecret(password, expectedPassword)) return res.status(401).json({ error: 'The email or password is incorrect.' });
   attempts.delete(ip);
-  res.cookie(cookieName, sessionToken(expectedEmail), cookieOptions());
+  res.cookie(cookieName, sessionToken(expectedEmail), cookieOptions(req));
   res.json({ authenticated: true, role: 'admin', email: expectedEmail });
 });
 
+router.post('/admin/demo-login', (req, res) => {
+  if (!isPreviewDemoMode()) return res.status(404).json({ error: 'Preview demo sign-in is unavailable.' });
+  if (sessionSecret().length < 32) return res.status(503).json({ error: 'The preview session is not configured.' });
+  const email = 'preview-librarian@aurora.test';
+  res.cookie(cookieName, sessionToken(email), cookieOptions(req));
+  res.json({ authenticated: true, role: 'admin', email, demoMode: true });
+});
+
 router.post('/logout', (req, res) => {
-  res.clearCookie(cookieName, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  const { maxAge: _maxAge, ...options } = cookieOptions(req);
+  res.clearCookie(cookieName, options);
   res.json({ ok: true });
 });
 

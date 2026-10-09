@@ -27,3 +27,16 @@ body{font-size:14px;line-height:1.55;color:#2d322b}button,input,select{font-size
 @media(max-width:900px){.entry-shell .entry-content{width:calc(100% - 40px);grid-template-columns:minmax(0,1.4fr) minmax(190px,.8fr);column-gap:13px}.entry-shell .entry-content h1{font-size:45px}.logo-aura{width:min(100%,240px)}}
 @media(max-width:720px){.entry-shell .entry-content{width:calc(100% - 30px);min-height:0;display:flex;flex-direction:column;padding:15px 0 10px}.entry-shell .entry-hero-logo{display:none}.entry-shell .entry-content h1{font-size:42px}.entry-shell .role-grid{margin-top:14px}.entry-shell .entry-quote{margin-top:11px}.entry-shell .role-card{min-height:138px}}
 @media(max-width:480px){.entry-shell .entry-content h1{font-size:36px}.entry-shell .role-card{min-height:137px;padding:12px}.entry-shell .role-card>strong{font-size:18px}}
+
+/* Functional preview-mode cues: clear, compact, and unmistakably non-persistent. */
+.demo-state-banner,.demo-login-note{display:flex;align-items:flex-start;gap:9px;border:1px solid #ddc990;border-radius:5px;background:#f8f1df;color:#69521f;padding:10px 12px;font-size:12px;line-height:1.55}
+.demo-state-banner{margin:-11px 0 19px}
+.demo-state-banner svg,.demo-login-note svg{flex:0 0 auto;margin-top:2px;color:#a27b31}
+.demo-state-banner strong,.demo-login-note strong{color:#523d17}
+.demo-login-note{margin:14px 0 10px}
+.demo-login-button{width:100%;min-height:43px;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid #b78d42;border-radius:4px;background:#c99a45;color:#191811;padding:0 13px;font-size:12px;font-weight:700;transition:background .18s,transform .18s,box-shadow .18s}
+.demo-login-button:hover{background:#d5aa5c;box-shadow:0 3px 10px rgba(125,91,32,.15);transform:translateY(-1px)}
+.demo-login-button:disabled{opacity:.65;cursor:wait;transform:none}
+.login-divider{display:flex;align-items:center;gap:10px;margin:17px 0 13px;color:#99978d;font-size:9px;font-weight:700;letter-spacing:.12em}
+.login-divider::before,.login-divider::after{content:"";height:1px;flex:1;background:#e8e4d8}
+@media(max-width:700px){.demo-state-banner{margin:0 0 15px;font-size:11px}.demo-login-note{font-size:11px}}

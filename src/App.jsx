@@ -33,6 +33,7 @@ function AdminDashboard({ onLogout }) {
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -46,6 +47,7 @@ function AdminDashboard({ onLogout }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { api.get('/health').then(({ data }) => setDemoMode(Boolean(data.demoMode))).catch(() => {}); }, []);
   useEffect(() => {
     if (!notice) return undefined;
     const timer = window.setTimeout(() => setNotice(''), 3400);
@@ -108,6 +110,7 @@ function AdminDashboard({ onLogout }) {
           <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line" />{page === 'overview' ? 'YOUR LIBRARY, AT A GLANCE' : page === 'books' ? 'THE COLLECTION' : page === 'members' ? 'YOUR READING COMMUNITY' : 'LENDING REGISTER'}</div><h1>{page === 'overview' ? 'Good morning, librarian.' : page === 'books' ? 'Book collection' : page === 'members' ? 'Library members' : 'Circulation desk'} <span className="heading-period">.</span></h1><p className="page-subtitle">{page === 'overview' ? 'A little order, a lot of possibility. Here’s the day at Aurora.' : page === 'books' ? 'Every title on your shelves, thoughtfully accounted for.' : page === 'members' ? 'The curious minds who make this library a community.' : 'Keep each book moving from one reader to the next.'}</p></div>
             <div className="heading-actions">{page === 'books' && <button className="btn-primary" onClick={() => setDialog({ type: 'book' })}><Plus size={17} /> Add a book</button>}{page === 'members' && <button className="btn-primary" onClick={() => setDialog({ type: 'member' })}><Plus size={17} /> Add a member</button>}{page === 'circulation' && <button className="btn-primary" onClick={() => setDialog({ type: 'loan' })}><ArrowUpRight size={17} /> Issue a book</button>}</div>
           </div>
+          {demoMode && <div className="demo-state-banner"><Sparkles size={16} /><span><strong>Interactive preview mode.</strong> These records are fictional and changes stay in this temporary process; they are not saved to MongoDB.</span></div>}
 
           {error && <div className="alert-error"><AlertCircle size={17} /><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss"><X size={16} /></button></div>}
           {busy && <div className="loading-bar"><LoaderCircle size={16} className="spin" /> Connecting to the library register…</div>}
@@ -198,7 +201,7 @@ export default function App() {
 
   useEffect(() => {
     api.get('/auth/session')
-      .then(({ data }) => { if (data.authenticated) setScreen('admin'); })
+      .then(({ data }) => { if (data.authenticated) setScreen('desk'); })
       .catch(() => {})
       .finally(() => setCheckingSession(false));
   }, []);
@@ -208,6 +211,8 @@ export default function App() {
   }
 
   if (checkingSession) return <div className="entry-loading"><LoaderCircle size={19} className="spin" /> Opening Aurora Library…</div>;
-  if (screen === 'admin') return <AdminDashboard onLogout={logout} />;
-  return <EntryFlow screen={screen} onScreen={setScreen} onAdminSuccess={() => setScreen('admin')} />;
+  if (screen === 'desk') return <AdminDashboard onLogout={logout} />;
+  const entryScreen = screen === 'signin' ? 'admin' : screen;
+  const navigateEntry = (next) => setScreen(next === 'admin' ? 'signin' : next);
+  return <EntryFlow screen={entryScreen} onScreen={navigateEntry} onAdminSuccess={() => setScreen('desk')} />;
 }
