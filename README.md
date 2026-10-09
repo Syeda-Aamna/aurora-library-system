@@ -24,7 +24,7 @@ Issue/return endpoints update available inventory and block over-issuing, duplic
 
 ## Deploy to Vercel
 
-Import this repository as a new Vercel project and add `MONGODB_URI` as an encrypted server environment variable for the environments you intend to use. The Express handler in `api/index.js` serves `/api/*`; the built Vite app serves all other paths. Never reuse or edit the existing Vercel project unless the owner explicitly requests it. The repository includes `vercel.json` for API and SPA routes.
+Import this repository as a new Vercel project and add `MONGODB_URI` as an encrypted server environment variable for the environments you intend to use. The Express handler in `api/index.js` serves `/api/*` through one serverless function; `vercel.json` preserves the REST path when rewriting to the function. The built Vite app serves all other paths. Never reuse or edit the existing Vercel project unless the owner explicitly requests it. The repository includes `vercel.json` for API and SPA routes.
 
 ## Data model
 

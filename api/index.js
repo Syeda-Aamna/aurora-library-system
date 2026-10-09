@@ -8,6 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+// Vercel routes /api/* to this one function; restore the requested Express path.
+app.use((req, _res, next) => {
+  if (req.path === '/api/index.js' && typeof req.query.__route === 'string') {
+    const route = req.query.__route.replace(/^\/+/, '');
+    const query = new URLSearchParams(req.query);
+    query.delete('__route');
+    req.url = `/api/${route}${query.size ? `?${query.toString()}` : ''}`;
+  }
+  next();
+});
+
 let connectionPromise;
 async function connectDatabase() {
   if (mongoose.connection.readyState === 1) return;
