@@ -30,6 +30,8 @@ For a **fully interactive local preview**, set `DEMO_MODE=true` with no `MONGODB
 
 Admin sessions are signed, HTTP-only cookies with a 12-hour lifetime. Login credentials and the signing secret are runtime environment variables. The public book endpoint returns only catalog fields, never member contact details or private circulation records.
 
+`GET /api/health` reports only whether the database and administrator settings are configured; it never returns their values. The staff sign-in screen uses these readiness flags to show a clear setup-required state instead of presenting a production login that cannot work. The flags report variable presence, not whether the MongoDB host is reachable.
+
 Issue/return endpoints adjust available inventory and guard against over-issuing, duplicate returns, quantity reductions below checked-out copies, and deletion of records with active loans. ISBNs and member emails are unique.
 
 ## Deploy

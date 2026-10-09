@@ -83,7 +83,17 @@ const database = async (_req, _res, next) => {
   try { await connectDatabase(); next(); } catch (error) { next(error); }
 };
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'aurora-library-api', demoMode }));
+app.get('/api/health', (_req, res) => res.json({
+  ok: true,
+  service: 'aurora-library-api',
+  demoMode,
+  databaseConfigured: Boolean(process.env.MONGODB_URI),
+  adminConfigured: Boolean(
+    String(process.env.SESSION_SECRET || '').length >= 32 &&
+    String(process.env.ADMIN_EMAIL || '').trim() &&
+    process.env.ADMIN_PASSWORD,
+  ),
+}));
 app.use('/api/auth', authRouter);
 if (demoMode) {
   app.use('/api/public', demoPublicRouter);

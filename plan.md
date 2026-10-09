@@ -17,7 +17,7 @@ A public, separate MERN library-management application linked to the user's new 
 - Circulation: issue an available copy to a member, mark active loans returned, maintain history, and update stock in the same operations; refuse invalid or duplicate operations.
 - Dashboard: totals for titles, members, active/returned loans and available copies, plus recent circulation and low-stock insight.
 - Public reader catalog: sanitized catalog fields only. It can show clearly labeled fictional preview books with invented authors and correct years if the API database is not configured.
-- Librarian access: signed HTTP-only session; demo login exists only in non-production memory mode. Production requires private credentials and `SESSION_SECRET`.
+- Librarian access: signed HTTP-only session; demo login exists only in non-production memory mode. Production requires private credentials, persistent MongoDB, and `SESSION_SECRET`; a readiness notice explains missing setup and prevents a dead-end sign-in attempt.
 - Sample data: seed fictional books/members/loans only on a genuinely empty MongoDB database, once; do not seed over a populated library.
 
 ## Design
@@ -35,4 +35,4 @@ A public, separate MERN library-management application linked to the user's new 
 - **Signature brand color:** antique Aurora gold `#d4a23e` against espresso-black `#090705`.
 
 ## Deployment constraints
-Vercel should serve the React app and Express API in a new project. The permanent app needs private `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` server environment variables. A public repository must never contain these secrets. If Vercel project-creation access is unavailable, keep the original deployment untouched and request the required sign-in/permission; do not claim permanent deployment. Rotate the previously disclosed database credential before production.
+The separate Vercel project now serves the React app and Express API. Full production operations need private `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` server environment variables. A public repository must never contain these secrets. Project-scope access currently blocks environment updates, so keep the original deployment untouched and await reauthorization. Rotate the previously disclosed database credential before using it in production.

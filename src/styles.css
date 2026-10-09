@@ -40,3 +40,14 @@ body{font-size:14px;line-height:1.55;color:#2d322b}button,input,select{font-size
 .login-divider{display:flex;align-items:center;gap:10px;margin:17px 0 13px;color:#99978d;font-size:9px;font-weight:700;letter-spacing:.12em}
 .login-divider::before,.login-divider::after{content:"";height:1px;flex:1;background:#e8e4d8}
 @media(max-width:700px){.demo-state-banner{margin:0 0 15px;font-size:11px}.demo-login-note{font-size:11px}}
+
+
+/* Production setup state: explain a locked staff desk instead of presenting a broken sign-in form. */
+.setup-required{display:flex;align-items:flex-start;gap:10px;margin:14px 0 12px;padding:12px;border:1px solid #e4d3ae;border-left:3px solid #b78d42;border-radius:4px;background:#faf5e8;color:#66542f;font-size:12px;line-height:1.55}
+.setup-required>svg{flex:0 0 auto;margin-top:2px;color:#9a7430}
+.setup-required strong{display:block;color:#453719;font-size:13px;margin-bottom:3px}
+.setup-required p{margin:0;color:#71664e;font-size:11px;line-height:1.55}
+.setup-required code{display:block;margin-top:8px;padding:7px 8px;border-radius:3px;background:#f0e8d7;color:#51411f;font:600 10px/1.55 'DM Sans',sans-serif;overflow-wrap:anywhere}
+.setup-required small{display:block;margin-top:7px;color:#83785f;font-size:10px;line-height:1.5}
+.setup-locked{margin-top:14px;color:#80682f}
+@media(max-width:480px){.setup-required{gap:8px;padding:10px;font-size:11px}.setup-required code{font-size:9px}}

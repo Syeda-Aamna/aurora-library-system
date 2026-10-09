@@ -139,10 +139,16 @@ function AdminSignIn({ onBack, onSuccess }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
+  const [runtimeStatus, setRuntimeStatus] = useState({ checking: true });
+  const demoMode = Boolean(runtimeStatus.demoMode);
+  const setupIncomplete = !runtimeStatus.checking && !demoMode && (
+    runtimeStatus.unavailable || !runtimeStatus.databaseConfigured || !runtimeStatus.adminConfigured
+  );
 
   useEffect(() => {
-    api.get('/health').then(({ data }) => setDemoMode(Boolean(data.demoMode))).catch(() => {});
+    api.get('/health')
+      .then(({ data }) => setRuntimeStatus({ ...data, checking: false }))
+      .catch(() => setRuntimeStatus({ checking: false, unavailable: true }));
   }, []);
 
   async function enterDemo() {
@@ -172,16 +178,30 @@ function AdminSignIn({ onBack, onSuccess }) {
         <form className="login-card" onSubmit={submit}>
           <div className="login-lock"><ShieldCheck size={21} /></div>
           <span className="role-overline">ADMINISTRATOR</span>
-          <h2>Sign in to Aurora</h2>
-          <p>Your library records are accessible to staff only.</p>
+          <h2>{setupIncomplete ? 'Library desk setup' : 'Sign in to Aurora'}</h2>
+          <p>{setupIncomplete ? 'The staff workspace is safely locked until this deployment is ready.' : 'Your library records are accessible to staff only.'}</p>
+          {setupIncomplete && <div className="setup-required" role="status">
+            <AlertCircle size={18} />
+            <div>
+              <strong>{runtimeStatus.unavailable ? 'Library service unavailable' : 'Production setup required'}</strong>
+              <p>{runtimeStatus.unavailable ? 'The library service could not be reached. Try again later or check the deployment.' : 'Staff operations need persistent storage and administrator authentication. The reader catalog remains a read-only preview until these are configured.'}</p>
+              {!runtimeStatus.unavailable && <>
+                <code>MONGODB_URI · SESSION_SECRET · ADMIN_EMAIL · ADMIN_PASSWORD</code>
+                <small>Add any missing values to the new Vercel project’s Production Environment, then redeploy. Keep secret values out of source code.</small>
+              </>}
+            </div>
+          </div>}
           {demoMode && <div className="demo-login-note"><Sparkles size={16} /><span><strong>Interactive preview desk.</strong> Uses fictional data stored only in this preview process.</span></div>}
           {error && <div className="login-error"><AlertCircle size={15} />{error}</div>}
           {demoMode && <button type="button" className="demo-login-button" onClick={enterDemo} disabled={saving}>{saving ? <LoaderCircle size={16} className="spin" /> : <LibraryBig size={16} />}{saving ? 'Opening demo desk…' : 'Enter librarian demo'}<ArrowRight size={15} /></button>}
-          <div className="login-divider">{demoMode ? 'OR SIGN IN WITH STAFF CREDENTIALS' : 'STAFF CREDENTIALS'}</div>
-          <label className="login-field"><span>Email address</span><input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@yourlibrary.org" /></label>
-          <label className="login-field"><span>Password</span><input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /></label>
-          <button className="login-submit" disabled={saving}>{saving ? <LoaderCircle size={16} className="spin" /> : null}{saving ? 'Checking credentials…' : 'Open library desk'}{!saving && <ArrowRight size={15} />}</button>
-          <div className="login-security"><CheckCircle2 size={14} />Protected staff access</div>
+          {!setupIncomplete && <>
+            <div className="login-divider">{demoMode ? 'OR SIGN IN WITH STAFF CREDENTIALS' : 'STAFF CREDENTIALS'}</div>
+            <label className="login-field"><span>Email address</span><input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@yourlibrary.org" /></label>
+            <label className="login-field"><span>Password</span><input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /></label>
+            <button className="login-submit" disabled={saving}>{saving ? <LoaderCircle size={16} className="spin" /> : null}{saving ? 'Checking credentials…' : 'Open library desk'}{!saving && <ArrowRight size={15} />}</button>
+            <div className="login-security"><CheckCircle2 size={14} />Protected staff access</div>
+          </>}
+          {setupIncomplete && <div className="login-security setup-locked"><ShieldCheck size={14} />Administrator workspace unavailable until setup is complete</div>}
         </form>
       </section>
       <footer className="entry-footer"><span>AURORA LIBRARY <i>·</i> EST. 2026</span><span>PRIVATE STAFF WORKSPACE</span></footer>
