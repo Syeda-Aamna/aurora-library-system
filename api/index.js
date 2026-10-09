@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import router from './routes.js';
+import authRouter, { requireAdmin } from './auth.js';
+import publicRouter from './public.js';
 
 const app = express();
 app.use(cors());
@@ -29,11 +31,14 @@ async function connectDatabase() {
   }
   await connectionPromise;
 }
+const database = async (_req, _res, next) => {
+  try { await connectDatabase(); next(); } catch (error) { next(error); }
+};
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'aurora-library-api' }));
-app.use('/api', async (req, res, next) => {
-  try { await connectDatabase(); next(); } catch (error) { next(error); }
-}, router);
+app.use('/api/auth', authRouter);
+app.use('/api/public', database, publicRouter);
+app.use('/api', requireAdmin, database, router);
 app.use((error, _req, res, _next) => {
   const status = error.status || (error.name === 'ValidationError' || error.name === 'CastError' ? 400 : error.code === 11000 ? 409 : 500);
   const message = error.code === 11000 ? 'That ISBN or email address is already in use.' : status === 500 ? 'The server could not complete that request.' : error.message;

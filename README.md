@@ -1,30 +1,30 @@
 # Aurora Library Management System
 
-A MERN library desk built with React, Express, Node.js and MongoDB/Mongoose. It includes book and member registers, circulation, stock-aware issue/return workflows, and dashboard totals. This repository is intentionally separate from the pre-existing Aurora landing-page repository and deployment.
+A MERN library desk built with React, Express, Node.js and MongoDB/Mongoose. The first screen offers a public reader catalog or administrator sign-in. Visitors can browse a privacy-limited catalog; member records, inventory editing, dashboard metrics and circulation operations require an administrator session.
 
 ## Run locally
 
 ```bash
 npm install
 cp .env.example .env
-# Set MONGODB_URI to a MongoDB Atlas or local MongoDB URI in .env
+# Set MONGODB_URI, SESSION_SECRET, ADMIN_EMAIL, and ADMIN_PASSWORD in .env
 npm run dev
 ```
 
-Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:3001`. The app expects a reachable MongoDB database. Do not commit `.env` or put database secrets in frontend variables.
+Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:3001`. Keep `.env` private and never commit it. Use a fresh 32+ character `SESSION_SECRET` and a strong administrator password.
 
 ## API
 
-- `GET /api/health`, `GET /api/dashboard`
-- `GET|POST /api/books`, `PATCH|DELETE /api/books/:id`
-- `GET|POST /api/members`, `PATCH|DELETE /api/members/:id`
-- `GET|POST /api/loans`, `PATCH /api/loans/:id/return`
+- Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/logout`, `GET /api/public/books`
+- Administrator session required: `GET /api/dashboard`; `GET|POST /api/books`, `PATCH|DELETE /api/books/:id`; `GET|POST /api/members`, `PATCH|DELETE /api/members/:id`; `GET|POST /api/loans`, `PATCH /api/loans/:id/return`
 
-Issue/return endpoints update available inventory and block over-issuing, duplicate returns, quantity reductions below checked-out copies, and removal of records with active loans. ISBNs and member emails are unique.
+Admin sessions are signed, HTTP-only cookies with a 12-hour lifetime. Login credentials and the signing secret are runtime environment variables. The public book endpoint returns only catalog fields, never member contact details or private circulation records.
 
-## Deploy to Vercel
+Issue/return endpoints adjust available inventory and guard against over-issuing, duplicate returns, quantity reductions below checked-out copies, and deletion of records with active loans. ISBNs and member emails are unique.
 
-Import this repository as a new Vercel project and add `MONGODB_URI` as an encrypted server environment variable for the environments you intend to use. The Express handler in `api/index.js` serves `/api/*` through one serverless function; `vercel.json` preserves the REST path when rewriting to the function. The built Vite app serves all other paths. Never reuse or edit the existing Vercel project unless the owner explicitly requests it. The repository includes `vercel.json` for API and SPA routes.
+## Deploy
+
+Create a new Vercel project linked to this repository and add `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` as private server environment variables. `api/index.js` serves the Express API through a Vercel function; `vercel.json` preserves REST paths, and Vite builds the React frontend. Configure these values only in the host’s encrypted environment or a local ignored `.env` file.
 
 ## Data model
 

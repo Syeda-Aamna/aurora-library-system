@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import EntryFlow from './EntryFlow.jsx';
 import {
   Activity, AlertCircle, ArrowDownLeft, ArrowRight, ArrowUpRight, BookMarked,
   BookOpen, Check, CheckCircle2, ChevronDown, Clock3, Command, FileText,
@@ -19,7 +20,7 @@ const menu = [
   { id: 'circulation', label: 'Circulation', icon: ArrowDownLeft },
 ];
 
-function App() {
+function AdminDashboard({ onLogout }) {
   const [page, setPage] = useState('overview');
   const [books, setBooks] = useState([]);
   const [members, setMembers] = useState([]);
@@ -97,7 +98,7 @@ function App() {
         <div className="sidebar-spacer" />
         <div className="side-rule" />
         <div className="reading-note"><Sparkles size={15} /><span>“Every page opens a door.”</span><small>THE LIBRARY MOTTO</small></div>
-        <div className="profile-row"><div className="avatar librarian-avatar">AL</div><div className="profile-copy"><strong>Library Admin</strong><span>Librarian</span></div><button className="icon-btn logout-btn" title="Sign out" aria-label="Sign out"><LogOut size={16} /></button></div>
+        <div className="profile-row"><div className="avatar librarian-avatar">AL</div><div className="profile-copy"><strong>Library Admin</strong><span>Librarian</span></div><button className="icon-btn logout-btn" title="Sign out" aria-label="Sign out" onClick={onLogout}><LogOut size={16} /></button></div>
       </aside>
       {mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation" />}
 
@@ -190,4 +191,22 @@ function Field({ label, name, type = 'text', required, defaultValue, placeholder
   return <label className={`form-field ${className}`}><span>{label}</span><input name={name} type={type} required={required} defaultValue={defaultValue} placeholder={placeholder} min={min} max={max} /></label>;
 }
 
-export default App;
+export default function App() {
+  const [screen, setScreen] = useState('choose');
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    api.get('/auth/session')
+      .then(({ data }) => { if (data.authenticated) setScreen('admin'); })
+      .catch(() => {})
+      .finally(() => setCheckingSession(false));
+  }, []);
+
+  async function logout() {
+    try { await api.post('/auth/logout'); } finally { setScreen('choose'); }
+  }
+
+  if (checkingSession) return <div className="entry-loading"><LoaderCircle size={19} className="spin" /> Opening Aurora Library…</div>;
+  if (screen === 'admin') return <AdminDashboard onLogout={logout} />;
+  return <EntryFlow screen={screen} onScreen={setScreen} onAdminSuccess={() => setScreen('admin')} />;
+}
