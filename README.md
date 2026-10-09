@@ -17,6 +17,8 @@ Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:
 
 On the first API request, the app seeds a **fictional demo library** only if the MongoDB database has no books, members, or loans. It creates six clearly marked imaginary titles, three test-only members, one active sample loan and one returned sample loan so the catalog, dashboard, inventory counts and circulation screens have example activity. Sample emails use the reserved `.test` domain. The seed is recorded once; deleting the samples later will not make them reappear. To disable first-run seeding, set `SEED_DEMO_DATA=false` before the first API request.
 
+If the public reader page is opened without `MONGODB_URI`, it displays those same six fictional books from a **local, read-only preview fallback** so titles, invented authors, categories, years and availability are visible before database setup. This browser preview is clearly labeled and does not persist edits; real CRUD and circulation remain backed by MongoDB and require administrator sign-in.
+
 ## API
 
 - Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/logout`, `GET /api/public/books`

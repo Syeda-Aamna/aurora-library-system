@@ -90,7 +90,7 @@ function AdminDashboard({ onLogout }) {
   return (
     <div className="app-frame">
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
-        <div className="brand-lockup"><div className="brand-mark"><BookMarked size={19} strokeWidth={1.6} /></div><div><strong>Aurora</strong><span>LIBRARY DESK</span></div><button className="mobile-close icon-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
+        <div className="brand-lockup"><div className="brand-mark"><img className="brand-logo" src="/aurora-logo.png" alt="Aurora Store" /></div><div><strong>Aurora Store</strong><span>LIBRARY DESK</span></div><button className="mobile-close icon-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={18} /></button></div>
         <div className="side-caption">WORKSPACE</div>
         <nav className="side-nav" aria-label="Main navigation">
           {menu.map(({ id, label, icon: Icon }) => <button key={id} className={`nav-item ${page === id ? 'nav-active' : ''}`} onClick={() => { setPage(id); setSearch(''); setMobileOpen(false); }}><Icon size={18} strokeWidth={1.75} /><span>{label}</span>{id === 'circulation' && dashboard?.issued > 0 && <small>{dashboard.issued}</small>}</button>)}
