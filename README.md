@@ -13,6 +13,10 @@ npm run dev
 
 Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:3001`. Keep `.env` private and never commit it. Use a fresh 32+ character `SESSION_SECRET` and a strong administrator password.
 
+## Sample library data
+
+On the first API request, the app seeds a **fictional demo library** only if the MongoDB database has no books, members, or loans. It creates six clearly marked imaginary titles, three test-only members, one active sample loan and one returned sample loan so the catalog, dashboard, inventory counts and circulation screens have example activity. Sample emails use the reserved `.test` domain. The seed is recorded once; deleting the samples later will not make them reappear. To disable first-run seeding, set `SEED_DEMO_DATA=false` before the first API request.
+
 ## API
 
 - Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/logout`, `GET /api/public/books`

@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import router from './routes.js';
 import authRouter, { requireAdmin } from './auth.js';
 import publicRouter from './public.js';
+import { Book, Member, Loan, LibrarySetting } from './models.js';
 
 const app = express();
 app.use(cors());
@@ -21,15 +22,71 @@ app.use((req, _res, next) => {
   next();
 });
 
+const demoSeedKey = 'aurora-fictional-demo-data-v1';
+const sampleBooks = [
+  { title: 'The Lantern Archive', author: 'Elian North', category: 'Literary fiction', isbn: 'AUR-DEMO-001', quantity: 4, availableQuantity: 3, publicationYear: 2022, isSample: true },
+  { title: 'A Map of Quiet Stars', author: 'Mira Solenne', category: 'Fantasy', isbn: 'AUR-DEMO-002', quantity: 3, availableQuantity: 3, publicationYear: 2021, isSample: true },
+  { title: 'The Glass Orchard', author: 'Rowan Bell', category: 'Mystery', isbn: 'AUR-DEMO-003', quantity: 2, availableQuantity: 2, publicationYear: 2024, isSample: true },
+  { title: 'Letters from Bracken Hill', author: 'Iris Wren', category: 'Historical fiction', isbn: 'AUR-DEMO-004', quantity: 3, availableQuantity: 3, publicationYear: 2019, isSample: true },
+  { title: 'The Clockmaker’s Garden', author: 'Alden Finch', category: 'Fantasy', isbn: 'AUR-DEMO-005', quantity: 2, availableQuantity: 2, publicationYear: 2023, isSample: true },
+  { title: 'A Field Guide to Small Wonders', author: 'Noa Hartwell', category: 'Nature', isbn: 'AUR-DEMO-006', quantity: 5, availableQuantity: 5, publicationYear: 2020, isSample: true },
+];
+const sampleMembers = [
+  { name: 'Mira Vale', email: 'mira.vale@example.test', phone: '+1 555 0101', address: '12 Story Lane, Sampletown', membershipDate: new Date('2025-03-12T12:00:00Z'), isSample: true },
+  { name: 'Theo Finch', email: 'theo.finch@example.test', phone: '+1 555 0102', address: '8 Lantern Walk, Sampletown', membershipDate: new Date('2025-06-04T12:00:00Z'), isSample: true },
+  { name: 'Anika Wren', email: 'anika.wren@example.test', phone: '+1 555 0103', address: '31 Bracken Road, Sampletown', membershipDate: new Date('2025-09-21T12:00:00Z'), isSample: true },
+];
+let demoSeedPromise;
+async function upsertSample(Model, field, value, data) {
+  const filter = { [field]: value };
+  try {
+    return await Model.findOneAndUpdate(filter, { $setOnInsert: data }, { upsert: true, new: true, runValidators: true });
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+    const existing = await Model.findOne(filter);
+    if (existing) return existing;
+    throw error;
+  }
+}
+async function markDemoSeed(value) {
+  try { await LibrarySetting.updateOne({ key: demoSeedKey }, { $setOnInsert: { key: demoSeedKey, value } }, { upsert: true }); }
+  catch (error) { if (error.code !== 11000) throw error; }
+}
+async function seedDemoData() {
+  if (process.env.SEED_DEMO_DATA === 'false' || await LibrarySetting.exists({ key: demoSeedKey })) return;
+  if (!demoSeedPromise) {
+    demoSeedPromise = (async () => {
+      const [bookCount, memberCount, loanCount] = await Promise.all([Book.estimatedDocumentCount(), Member.estimatedDocumentCount(), Loan.estimatedDocumentCount()]);
+      if (bookCount || memberCount || loanCount) {
+        await markDemoSeed('skipped-existing-library');
+        return;
+      }
+      const [books, members] = await Promise.all([
+        Promise.all(sampleBooks.map((data) => upsertSample(Book, 'isbn', data.isbn, data))),
+        Promise.all(sampleMembers.map((data) => upsertSample(Member, 'email', data.email, data))),
+      ]);
+      const now = Date.now();
+      await Promise.all([
+        upsertSample(Loan, 'demoKey', 'aurora-demo-active-issue', { demoKey: 'aurora-demo-active-issue', book: books[0]._id, member: members[0]._id, issuedAt: new Date(now - 3 * 86400000), dueAt: new Date(now + 11 * 86400000), status: 'issued', isSample: true }),
+        upsertSample(Loan, 'demoKey', 'aurora-demo-returned-issue', { demoKey: 'aurora-demo-returned-issue', book: books[1]._id, member: members[1]._id, issuedAt: new Date(now - 9 * 86400000), dueAt: new Date(now - 2 * 86400000), returnedAt: new Date(now - 3 * 86400000), status: 'returned', isSample: true }),
+      ]);
+      await markDemoSeed('fictional-sample-records-created');
+    })().catch((error) => { demoSeedPromise = undefined; throw error; });
+  }
+  await demoSeedPromise;
+}
+
 let connectionPromise;
 async function connectDatabase() {
-  if (mongoose.connection.readyState === 1) return;
-  if (!process.env.MONGODB_URI) throw Object.assign(new Error('Database is not configured. Add MONGODB_URI to the server environment.'), { status: 503 });
-  if (!connectionPromise) {
-    connectionPromise = mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 })
-      .catch((error) => { connectionPromise = undefined; throw error; });
+  if (mongoose.connection.readyState !== 1) {
+    if (!process.env.MONGODB_URI) throw Object.assign(new Error('Database is not configured. Add MONGODB_URI to the server environment.'), { status: 503 });
+    if (!connectionPromise) {
+      connectionPromise = mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 8000 })
+        .catch((error) => { connectionPromise = undefined; throw error; });
+    }
+    await connectionPromise;
   }
-  await connectionPromise;
+  await seedDemoData();
 }
 const database = async (_req, _res, next) => {
   try { await connectDatabase(); next(); } catch (error) { next(error); }
