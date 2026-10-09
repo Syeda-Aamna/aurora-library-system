@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { isPreviewDemoMode } from './runtime.js';
 
 const router = Router();
-const cookieName = 'aurora_admin_session';
+const cookieName = 'library_staff_session';
 const sessionLifetime = 12 * 60 * 60 * 1000;
 const attempts = new Map();
 
@@ -34,13 +33,17 @@ function readCookie(req) {
   return entry ? decodeURIComponent(entry.slice(cookieName.length + 1)) : '';
 }
 function equalSecret(a, b) {
-  const left = Buffer.from(String(a)); const right = Buffer.from(String(b));
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
   return left.length === right.length && timingSafeEqual(left, right);
 }
 function rateLimited(ip) {
   const now = Date.now();
   const state = attempts.get(ip);
-  if (!state || state.resetAt < now) { attempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 }); return false; }
+  if (!state || state.resetAt < now) {
+    attempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return false;
+  }
   state.count += 1;
   return state.count > 8;
 }
@@ -57,19 +60,15 @@ router.post('/admin/login', (req, res) => {
   if (rateLimited(ip)) return res.status(429).json({ error: 'Too many sign-in attempts. Wait 15 minutes and try again.' });
   const expectedEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
   const expectedPassword = String(process.env.ADMIN_PASSWORD || '');
-  if (sessionSecret().length < 32 || !expectedEmail || !expectedPassword) return res.status(503).json({ error: 'Administrator sign-in is not configured yet.' });
-  if (!equalSecret(email, expectedEmail) || !equalSecret(password, expectedPassword)) return res.status(401).json({ error: 'The email or password is incorrect.' });
+  if (sessionSecret().length < 32 || !expectedEmail || !expectedPassword) {
+    return res.status(503).json({ error: 'Administrator sign-in is not configured yet.' });
+  }
+  if (!equalSecret(email, expectedEmail) || !equalSecret(password, expectedPassword)) {
+    return res.status(401).json({ error: 'The email or password is incorrect.' });
+  }
   attempts.delete(ip);
   res.cookie(cookieName, sessionToken(expectedEmail), cookieOptions(req));
   res.json({ authenticated: true, role: 'admin', email: expectedEmail });
-});
-
-router.post('/admin/demo-login', (req, res) => {
-  if (!isPreviewDemoMode()) return res.status(404).json({ error: 'Preview demo sign-in is unavailable.' });
-  if (sessionSecret().length < 32) return res.status(503).json({ error: 'The preview session is not configured.' });
-  const email = 'preview-librarian@aurora.test';
-  res.cookie(cookieName, sessionToken(email), cookieOptions(req));
-  res.json({ authenticated: true, role: 'admin', email, demoMode: true });
 });
 
 router.post('/logout', (req, res) => {

@@ -1,5 +1,5 @@
 {
-  "name": "aurora-library-system",
+  "name": "library-desk",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "dev:web": "vite --host 0.0.0.0",
     "build": "vite build",
     "start": "node server-local.js",
-    "check": "node --check api/index.js && node --check api/auth.js && node --check api/public.js && node --check api/routes.js && node --check api/models.js && node --check api/demo-store.js && node --check api/runtime.js && node --check server-local.js && node --check shared/demo-data.js"
+    "check": "node --check api/index.js && node --check api/async-route.js && node --check api/auth.js && node --check api/public.js && node --check api/routes.js && node --check api/models.js && node --check server-local.js && node --check shared/catalog-data.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

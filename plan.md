@@ -1,38 +1,35 @@
-# Aurora Store Library Desk — Implementation Plan
+# Library Desk — Rebuild Plan
 
 ## Scope and architecture
-A public, separate MERN library-management application linked to the user's new repository and (once access is available) its own Vercel project. The original Aurora Store website, repository, branding asset source and deployment are read-only references; they must not be changed. React/Vite uses the Express REST API. Production and any configured database use Mongoose/MongoDB for persistent books, members and circulation records. An explicitly opt-in, non-production `DEMO_MODE` with no `MONGODB_URI` uses a process-local fictional store behind the same REST routes so visitors can test librarian workflows without touching real data. Demo changes are ephemeral and labeled; the in-memory path is never used in production.
+Rebuild only the separate `aurora-library-system` application as a neutral, professional library portal. Do not change the original Aurora Store site, repository, deployment or logo. Keep the existing React/Vite frontend and Express/Mongoose backend structure. Production catalog, members, loans and circulation remain MongoDB-backed; no in-memory production mode or fake login will remain.
 
 ## Project structure
-- `src/`: role selection, public catalog, protected librarian UI, forms, state and API client.
-- `api/`: Express app, Mongoose models/routes/auth and isolated demo-only route store; Vercel function entry point.
-- `shared/demo-data.js`: common fictional catalog/member examples used by the reader fallback and MongoDB empty-database seeding.
-- `server-local.js`: local Express listener for development/demo mode.
-- `public/`: the user's Aurora Store logo and static web assets.
-- Root config: Vite, Vercel rewrites, npm scripts, environment example, README and route manifest.
+- `src/`: neutral reader and staff entry, public searchable catalog, authenticated librarian desk, forms and API client.
+- `api/`: Express/Vercel entry, Mongoose models, secure admin session, public catalog projection and REST routes.
+- `shared/catalog-data.js`: a small set of real book/edition records sourced from Open Library for initial catalog population.
+- `public/`: neutral book-mark favicon and normal frontend assets; remove the Aurora-specific logo.
+- Root configs/docs: Vite, Vercel path routing, npm scripts, `.env.example`, README and route manifest.
 
 ## Product behavior
-- Books: create, view, edit, delete, search/filter; display title, author, category, ISBN, total/available quantities and publication year.
-- Members: create, view, edit, delete and search; store name, email, phone, address and membership date.
-- Circulation: issue an available copy to a member, mark active loans returned, maintain history, and update stock in the same operations; refuse invalid or duplicate operations.
-- Dashboard: totals for titles, members, active/returned loans and available copies, plus recent circulation and low-stock insight.
-- Public reader catalog: sanitized catalog fields only. It can show clearly labeled fictional preview books with invented authors and correct years if the API database is not configured.
-- Librarian access: signed HTTP-only session; demo login exists only in non-production memory mode. Production requires private credentials, persistent MongoDB, and `SESSION_SECRET`; a readiness notice explains missing setup and prevents a dead-end sign-in attempt.
-- Sample data: seed fictional books/members/loans only on a genuinely empty MongoDB database, once; do not seed over a populated library.
+- Reader/user area: browse and search real catalog records, view accurate availability, return to the role chooser; readers do not issue or return inventory themselves.
+- Staff area: secure administrator sign-in, dashboard, book/member CRUD, issue/return and quantity updates through the existing REST API.
+- Starter catalog: add only verified real titles/authors/ISBNs/publication metadata. Set every initial physical-copy quantity and availability to zero because no actual holdings were supplied. Staff must record counted copies before any issue is possible.
+- Seed the real catalog only when the connected MongoDB database is genuinely empty; never overwrite populated records. No fictional members or loans, sample labels, or preview demo sign-in. If the database is disconnected, show only verified real-title metadata at zero copies with a prominent metadata-only notice—never claim live holdings or availability.
+- If production database/admin settings are absent, present a clear setup state rather than claiming that writes or login work. Keep environment values private and out of Git.
 
 ## Design
-- **Design movement:** Aurora Store's cinematic, literary editorial style, adapted from its dark branded landing page.
-- **Core principles:** identifiable original brand; compact vertical rhythm; legible inventory information; interactions that clearly distinguish demo from persistent data.
-- **Color philosophy:** espresso-black and charcoal create the existing reading-room mood; antique gold focuses key actions; warm ivory text preserves contrast and readability.
-- **Layout paradigm:** compact logo-led front door; public book catalogue as a shelf grid; librarian desk with slim side rail, concise KPI strip and operational tables.
-- **Signature elements:** exact circular feather/book Aurora Store emblem; warm gold chapter numerals and fine lines; book-cover tiles and sample-data seals.
-- **Interaction philosophy:** direct create/edit/issue dialogs with validation, confirmation on removal, immediate inventory updates, visible demo-only label and actionable errors.
-- **Animation:** restrained short transitions for hover and dialogs; no ornamental movement in data tables; honor reduced-motion preferences.
-- **Typography:** DM Sans for UI/data, Playfair Display for literary headings; readable 13–16 px body/data text and high-contrast title hierarchy.
-- **Brand essence:** a welcoming, dependable digital desk for the Aurora reading community. Personality: literary, warm, precise.
-- **Brand voice:** concise and inviting. Examples: “Find a story worth keeping.” “Every page opens a door.”
-- **Wordmark/logo:** reuse the exact supplied Aurora Store circular gold emblem from the user's read-only reference at https://my-project-evrj.vercel.app/; do not modify the original site.
-- **Signature brand color:** antique Aurora gold `#d4a23e` against espresso-black `#090705`.
+- **Design movement:** Modern civic-library editorial—quiet, trustworthy and operational rather than cinematic or brand-specific.
+- **Core principles:** clear information hierarchy; real holdings only; reader-first discovery; staff controls that make circulation states obvious.
+- **Color philosophy:** soft paper and cool white surfaces for long reading, deep ink/slate for navigation, restrained teal for available/confirmed states, and amber only for attention or due-date states.
+- **Layout paradigm:** a broad searchable catalog with compact book-cover cards for readers; a compact left-rail staff workspace with KPI strip and operational tables.
+- **Signature elements:** authentic edition covers keyed by ISBN with accessible icon fallback; concise availability chips; restrained shelf/category rules.
+- **Interaction philosophy:** search and availability are obvious; issue/return is staff-controlled and quantity-aware; zero-stock records are clearly marked “No copies recorded”; destructive actions stay confirmed.
+- **Animation:** short, low-motion transitions for menus and dialogs; no decorative motion; respect reduced-motion preferences.
+- **Typography:** DM Sans for UI/data with a restrained bookish serif for headings; minimum 14px body/data text, strong contrast and clear numeric alignment.
+- **Brand essence:** a dependable, welcoming digital library desk. Personality: calm, precise, accessible.
+- **Brand voice:** direct and useful. Examples: “Search the catalog.” “Record copies before lending.”
+- **Wordmark/logo:** generic open-book line icon with the neutral name “Library Desk”; no Aurora-specific imagery or invented institution.
+- **Signature brand color:** deep library teal `#28645f` on warm paper and slate.
 
-## Deployment constraints
-The separate Vercel project now serves the React app and Express API. Full production operations need private `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` server environment variables. A public repository must never contain these secrets. Project-scope access currently blocks environment updates, so keep the original deployment untouched and await reauthorization. Rotate the previously disclosed database credential before using it in production.
+## Data sourcing and deployment constraints
+Verify the chosen real editions through Open Library’s public catalog/cover services and cite the source in the README. The connected Vercel project already exists, but project-scope access previously returned 403; keep its environment secrets untouched until access is reauthorized. MongoDB and administrator/session values belong only in private Vercel production variables. Rotate credentials previously pasted into chat before production use.

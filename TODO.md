@@ -1,7 +1,8 @@
-# Remaining outcomes
+# Rebuild outcomes
 
-- [x] In the explicit non-production `DEMO_MODE` with no MongoDB URI, provide a clearly labeled fictional librarian login and a functional in-memory REST API for dashboard, book/member CRUD, search, issue and return. Preserve validation, duplicate detection, active-loan deletion rules, and automatic quantity updates; demo edits must not be represented as persistent.
-- [x] Keep MongoDB/Mongoose as the only production persistence path; do not expose demo login or fake admin access in production or while a Mongo URI is configured.
-- [x] Verify the browser role choice, public sample catalog, protected librarian sign-in, dashboard counts, book/member add and member edit, issue/return and quantity changes. Integration checks cover full CRUD, search, duplicate validation, deletion guards and production isolation.
-- [x] When production database or administrator settings are missing, show safe readiness status and a clear setup-required screen instead of an unusable staff login form; keep the staff workspace locked until configuration is complete.
-- [ ] After Vercel project-scope access is reauthorized and the disclosed MongoDB credential is rotated, set the new URI and administrator/session secrets as private production environment variables in the separate existing Vercel project and redeploy. Leave the original site and project unchanged.
+- [x] Replace Aurora-specific branding in the separate library app with a neutral, professional “Library Desk” identity; leave the original Aurora site/repository/deployment untouched.
+- [x] Remove fictional/demo records, in-memory demo routes/login, fictional-member/loan seeding, and sample labels. If the database is not connected, display only verified real-title metadata at zero copies with a clear metadata-only notice; never claim live availability.
+- [x] Add six verified real published book editions with real authors, edition ISBNs, categories, publication metadata, and cover references; initialize physical-copy and available counts to zero until actual holdings are supplied.
+- [x] Seed the real catalog only into an empty MongoDB database; never overwrite populated library data. Keep issue/return staff-only and require recorded stock before an issue can be created.
+- [x] Retain reader search/availability and the secure administrator portal for book/member CRUD, dashboard, issue/return and stock updates; show setup requirements rather than a broken sign-in when production is not ready.
+- [ ] After Vercel project-scope access is reauthorized and exposed credentials are rotated, configure only private production environment variables and redeploy the separate project.

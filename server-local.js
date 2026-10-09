@@ -1,4 +1,5 @@
 import 'dotenv/config';
 import app from './api/index.js';
+
 const port = Number(process.env.PORT || 3001);
-app.listen(port, '0.0.0.0', () => console.log(`Aurora Library API listening on ${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`Library Desk API listening on ${port}`));

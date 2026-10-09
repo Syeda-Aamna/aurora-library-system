@@ -1,43 +1,58 @@
-# Aurora Library Management System
+# Library Desk
 
-A MERN library desk built with React, Express, Node.js and MongoDB/Mongoose. The first screen offers a public reader catalog or administrator sign-in. Visitors can browse a privacy-limited catalog; member records, inventory editing, dashboard metrics and circulation operations require an administrator session.
+A professional MERN library-management portal built with React, Express, Node.js and MongoDB/Mongoose. Readers can search a real bibliographic catalog and see only recorded stock; authorized staff manage titles, members and circulation from a protected workspace. The original Aurora Store website and project are separate and untouched.
+
+## Reader and staff experience
+
+- **Public catalog:** search by title, author, category or ISBN; see a verified publication year, real ISBN, cover where available and current copy availability.
+- **Staff workspace:** secure administrator sign-in, collection and member CRUD, circulation, due dates, return history and dashboard metrics for total physical copies, titles, members, active issues, returns and available copies.
+- **Inventory integrity:** new and starter-catalog entries can begin at zero copies. An issue is allowed only for a counted, available copy and a registered member; issue and return operations reconcile available quantities.
+- **No fabricated activity:** no fictional members, demo loans, fake stock or in-memory administrator mode. When MongoDB is not connected, the reader view can show only known real bibliographic metadata with **zero copies** and an explicit metadata-only notice; the staff view explains which production settings are missing.
+
+The six verified starter titles are listed in [`CATALOG_SOURCES.md`](./CATALOG_SOURCES.md). Their real ISBN editions were checked against Open Library; the Covers API currently supplies images for five titles, while *The Adventures of Sherlock Holmes* uses a neutral icon fallback. Each displayed `publicationYear` is the work's original publication year, clearly distinguished from later paperback reprints. No title implies that the library owns a physical copy.
 
 ## Run locally
 
 ```bash
 npm install
 cp .env.example .env
-# Set MONGODB_URI, SESSION_SECRET, ADMIN_EMAIL, and ADMIN_PASSWORD in .env
+# Fill in private values in .env (never commit .env)
 npm run dev
 ```
 
-Vite runs at `http://localhost:5173`; the Express API runs at `http://localhost:3001`. Keep `.env` private and never commit it. Use a fresh 32+ character `SESSION_SECRET` and a strong administrator password.
+Vite is available at `http://localhost:5173`; the Express API is on `http://localhost:3001`. Configure a MongoDB database, a random `SESSION_SECRET` of at least 32 characters, and the staff email/password as environment variables. For a local site without a database, the public catalog still shows the verified title metadata at zero stock; production administrator sign-in and writes remain unavailable until required settings are configured. There is **no local demo login**.
 
-To try the complete fictional librarian demo without MongoDB, run `DEMO_MODE=true SESSION_SECRET="$(openssl rand -hex 32)" npm run dev` with no `MONGODB_URI`. This is a non-production preview mode; the UI marks it clearly and its changes live only in the current API process. For an HTTPS-hosted preview that proxies this local server, also set `PUBLIC_HTTPS_PREVIEW=true` so the administrator session cookie uses `Secure; SameSite=None`. The production service never allows demo login.
+On the first database connection, the API adds the six verified bibliographic records only if the database has no books, members or loans. Each starts with `quantity: 0` and `availableQuantity: 0`. Populated databases are never overwritten, no member/loan examples are inserted, and the one-time seed can be skipped with `SEED_STARTER_CATALOG=false`.
 
-The visual identity and logo use the user's original [Aurora Store site](https://my-project-evrj.vercel.app/) as a read-only reference; no changes are made to that original website or project.
+## Private production setup
 
-## Sample library data
+For the separate Vercel project, configure these values in its encrypted **Production Environment** settings and redeploy:
 
-On the first API request, the app seeds a **fictional demo library** only if the MongoDB database has no books, members, or loans. It creates six clearly marked imaginary titles, three test-only members, one active sample loan and one returned sample loan so the catalog, dashboard, inventory counts and circulation screens have example activity. Sample emails use the reserved `.test` domain. The seed is recorded once; deleting the samples later will not make them reappear. To disable first-run seeding, set `SEED_DEMO_DATA=false` before the first API request.
+- `MONGODB_URI`
+- `SESSION_SECRET`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
-For a **fully interactive local preview**, set `DEMO_MODE=true` with no `MONGODB_URI` and run outside production. The API then uses the same REST paths for in-memory fictional books, members and loans, and the staff sign-in screen offers **Enter librarian demo**. Add/edit/delete, issue/return, stock counts, validation, search and dashboard summaries all work; changes last for the lifetime of that preview process and reset when it restarts. Demo access is disabled automatically in production and whenever MongoDB is configured. If demo mode is off and MongoDB is absent, the public reader page still shows a clearly labeled read-only fallback; administrator writes require the database.
+Do not put credential values in source code, GitHub, screenshots or chat. Any credential already disclosed in chat should be rotated before production use. `GET /api/health` reports only non-secret configuration/connection booleans; it never returns environment-variable values.
 
 ## API
 
-- Public: `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/admin/demo-login` (interactive non-production demo only), `POST /api/auth/logout`, `GET /api/public/books`
-- Administrator session required: `GET /api/dashboard`; `GET|POST /api/books`, `PATCH|DELETE /api/books/:id`; `GET|POST /api/members`, `PATCH|DELETE /api/members/:id`; `GET|POST /api/loans`, `PATCH /api/loans/:id/return`
+- **Public:** `GET /api/health`, `GET /api/auth/session`, `POST /api/auth/admin/login`, `POST /api/auth/logout`, `GET /api/public/books`
+- **Administrator session required:** `GET /api/dashboard`; `GET|POST /api/books`; `PATCH|DELETE /api/books/:id`; `GET|POST /api/members`; `PATCH|DELETE /api/members/:id`; `GET|POST /api/loans`; `PATCH /api/loans/:id/return`
 
-Admin sessions are signed, HTTP-only cookies with a 12-hour lifetime. Login credentials and the signing secret are runtime environment variables. The public book endpoint returns only catalog fields, never member contact details or private circulation records.
-
-`GET /api/health` reports only whether the database and administrator settings are configured; it never returns their values. The staff sign-in screen uses these readiness flags to show a clear setup-required state instead of presenting a production login that cannot work. The flags report variable presence, not whether the MongoDB host is reachable.
-
-Issue/return endpoints adjust available inventory and guard against over-issuing, duplicate returns, quantity reductions below checked-out copies, and deletion of records with active loans. ISBNs and member emails are unique.
-
-## Deploy
-
-Create a new Vercel project linked to this repository and add `MONGODB_URI`, `SESSION_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` as private server environment variables. `api/index.js` serves the Express API through a Vercel function; `vercel.json` preserves REST paths, and Vite builds the React frontend. Configure these values only in the host’s encrypted environment or a local ignored `.env` file.
+Sessions use signed, HTTP-only cookies with a 12-hour lifetime. Login is rate-limited. Public endpoints omit member contact details and all private circulation records. ISBNs and member email addresses are unique; records with active loans cannot be deleted, and book quantity cannot be reduced below the copies currently on loan.
 
 ## Data model
 
-Book: title, author, category, ISBN, quantity, availableQuantity and publicationYear. Member: name, email, phone, address and membershipDate. Loan: book, member, issuedAt, dueAt, returnedAt and status.
+- **Book:** title, author, category, ISBN, total quantity, available quantity, publication year.
+- **Member:** name, email, phone, address, membership date.
+- **Loan:** book, member, issue date, due date, returned date and status.
+
+## Build and deployment
+
+```bash
+npm run check
+npm run build
+```
+
+`api/index.js` serves the Express REST API through the Vercel function; `vercel.json` preserves API paths, while Vite builds the React app. The live project uses the separate URL [aurora-library-system.vercel.app](https://aurora-library-system.vercel.app/); its URL/repository name does not change the neutral Library Desk branding inside the application.

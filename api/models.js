@@ -5,10 +5,9 @@ const bookSchema = new mongoose.Schema({
   author: { type: String, required: true, trim: true, maxlength: 120 },
   category: { type: String, required: true, trim: true, maxlength: 80 },
   isbn: { type: String, required: true, trim: true, unique: true, maxlength: 32 },
-  quantity: { type: Number, required: true, min: 1, validate: Number.isInteger },
+  quantity: { type: Number, required: true, min: 0, validate: Number.isInteger },
   availableQuantity: { type: Number, required: true, min: 0, validate: Number.isInteger },
   publicationYear: { type: Number, required: true, min: 1000, max: 2100, validate: Number.isInteger },
-  isSample: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const memberSchema = new mongoose.Schema({
@@ -17,7 +16,6 @@ const memberSchema = new mongoose.Schema({
   phone: { type: String, required: true, trim: true, maxlength: 40 },
   address: { type: String, required: true, trim: true, maxlength: 300 },
   membershipDate: { type: Date, required: true, default: Date.now },
-  isSample: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const loanSchema = new mongoose.Schema({
@@ -27,12 +25,13 @@ const loanSchema = new mongoose.Schema({
   dueAt: { type: Date, required: true },
   returnedAt: { type: Date, default: null },
   status: { type: String, enum: ['issued', 'returned'], default: 'issued', index: true },
-  isSample: { type: Boolean, default: false },
-  demoKey: { type: String, unique: true, sparse: true },
 }, { timestamps: true });
 loanSchema.index({ status: 1, issuedAt: -1 });
 
-const settingSchema = new mongoose.Schema({ key: { type: String, required: true, unique: true }, value: { type: mongoose.Schema.Types.Mixed } }, { timestamps: true });
+const settingSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: mongoose.Schema.Types.Mixed },
+}, { timestamps: true });
 
 export const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
 export const Member = mongoose.models.Member || mongoose.model('Member', memberSchema);
